@@ -77,6 +77,24 @@ describe('Oracle connector', function() {
     });
   });
 
+  it('should create only one pool when connect() is called while ' +
+    'initialize() is still connecting', function(done) {
+    const oracledb = require('oracledb');
+    const createPool = oracledb.createPool;
+    let poolsCreated = 0;
+    oracledb.createPool = function() {
+      poolsCreated++;
+      return createPool.apply(this, arguments);
+    };
+    db = new DataSource(require('../'), config);
+    db.connect(function(err) {
+      oracledb.createPool = createPool;
+      if (err) return done(err);
+      poolsCreated.should.equal(1);
+      db.disconnect(done);
+    });
+  });
+
   it('should close connection pool gracefully', function(done) {
     db = new DataSource(require('../'), config);
     db.connect(function() {

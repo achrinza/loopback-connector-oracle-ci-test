@@ -130,7 +130,7 @@ WAIT_STRING="."
 printf "\n${GREEN}Waiting for database to respond with updated schema $WAIT_STRING${PLAIN}"
 while [ "$OUTPUT" -ne 0 ] && [ "$TIMEOUT" -gt 0 ]
     do
-        "$DOCKER_CLI" exec -t "$ORACLE_CONTAINER" /bin/sh -c "echo exit | sqlplus ${USER}/{$PASSWORD}@//${HOST}:${PORT}/${DATABASE} @/home/tables.sql" > /dev/null 2>&1
+        "$DOCKER_CLI" exec -t "$ORACLE_CONTAINER" /bin/sh -c "echo exit | sqlplus -L ${USER}/${PASSWORD}@//${HOST}:${PORT}/${DATABASE} @/home/tables.sql" > /dev/null 2>&1
         OUTPUT=$?
         sleep 1s
         TIMEOUT=$((TIMEOUT - 1))
