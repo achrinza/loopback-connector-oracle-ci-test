@@ -55,7 +55,7 @@ jobs:
           docker exec oracle_free_db sh -c 'cat $ORACLE_BASE_HOME/network/admin/sqlnet.ora $ORACLE_BASE_HOME/network/admin/listener.ora' || true
           docker exec oracle_free_db sh -c 'for ip in 172.17.0.1 172.18.0.1 10.1.0.1; do s=$(date +%s%N); getent hosts $ip; echo "$ip rc=$? $(( ($(date +%s%N)-s)/1000000 ))ms"; done' || true
           node ci-diag/conn.js
-          npx mocha --timeout 120000 --reporter spec test/*.test.js 2>&1 | ts '[%H:%M:%.S]' || true
+          npx mocha --timeout 120000 --reporter spec test/*.test.js 2>&1 | while IFS= read -r l; do echo "[$(date +%T.%3N)] $l"; done
 
   code-lint:
     name: Code Lint
