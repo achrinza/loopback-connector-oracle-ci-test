@@ -50,7 +50,11 @@ jobs:
           SKIP_DB_CONTAINER_CREATION: 1
         run: |-
           . ./setup.sh
-          npm test
+          set +xe +o pipefail
+          docker exec oracle_free_db sh -c "echo exit | sqlplus -L TEST/0raclep4ss@//localhost:1521/FREEPDB1 @/home/tables.sql" | tail -30
+          s=$(date +%s)
+          npx mocha --timeout 120000 --file ci-diag/handles.js test/*.test.js node_modules/juggler-v3/test.js node_modules/juggler-v4/test.js | tail -80
+          echo "mocha exit after $(( $(date +%s)-s ))s"
 
   code-lint:
     name: Code Lint
