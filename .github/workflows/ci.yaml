@@ -51,7 +51,7 @@ jobs:
           SKIP_DB_CONTAINER_CREATION: 1
         run: |-
           . ./setup.sh
-          set +x
+          set +xe +o pipefail
           docker exec oracle_free_db cat /etc/resolv.conf /etc/hosts || true
           docker exec oracle_free_db sh -c 'cat $ORACLE_BASE_HOME/network/admin/sqlnet.ora $ORACLE_BASE_HOME/network/admin/listener.ora' || true
           docker exec oracle_free_db sh -c 'for ip in 172.17.0.1 172.18.0.1 10.1.0.1; do s=$(date +%s%N); getent hosts $ip; echo "$ip rc=$? $(( ($(date +%s%N)-s)/1000000 ))ms"; done' || true
