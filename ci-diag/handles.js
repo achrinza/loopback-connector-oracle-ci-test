@@ -1,35 +1,30 @@
 'use strict';
 /* eslint-disable no-console */
-const oracledb = require('oracledb');
-const pools = [];
-let currentTest = '(none)';
+const Oracle = require('../lib/oracle').Oracle;
+const connectors = new Map();
+let currentTest = '(load)';
 beforeEach(function() {
   currentTest = this.currentTest.fullTitle();
 });
-const createPool = oracledb.createPool;
-oracledb.createPool = function(cfg, cb) {
-  const rec = {test: currentTest, stack: new Error().stack, closed: false};
-  pools.push(rec);
-  return createPool.call(this, cfg, function(err, pool) {
-    if (pool) {
-      rec.pool = pool;
-      const close = pool.close;
-      pool.close = pool.terminate = function() {
-        rec.closed = true;
-        return close.apply(this, arguments);
-      };
-    }
-    cb(err, pool);
-  });
+const connect = Oracle.prototype.connect;
+Oracle.prototype.connect = function() {
+  if (!this.pool && !this._pendingConnectCallbacks) {
+    const list = connectors.get(this) || [];
+    list.push(currentTest + '\n' +
+      new Error().stack.split('\n').slice(2, 9).join('\n'));
+    connectors.set(this, list);
+  }
+  return connect.apply(this, arguments);
 };
 after(function() {
   setTimeout(function() {
-    console.log('POOLS created', pools.length);
-    for (const p of pools) {
-      if (p.pool && !p.closed) {
-        console.log('UNCLOSED POOL from test:', p.test,
-          'open=', p.pool.connectionsOpen, 'inUse=', p.pool.connectionsInUse);
-        console.log(p.stack.split('\n').slice(1, 14).join('\n'));
+    console.log('CONNECTORS', connectors.size);
+    for (const [c, list] of connectors) {
+      if (c.pool) {
+        console.log('UNCLOSED POOL open=' + c.pool.connectionsOpen +
+          ' inUse=' + c.pool.connectionsInUse +
+          ' ds.connected=' + (c.dataSource && c.dataSource.connected));
+        console.log(list.join('\n---\n'));
       }
     }
     console.log('ACTIVE RESOURCES', process.getActiveResourcesInfo());
