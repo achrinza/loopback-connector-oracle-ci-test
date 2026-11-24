@@ -122,7 +122,8 @@ rm podmanusercreate.sql
 
 
 ## variables needed to health check export schema
-OUTPUT=$?
+## (start non-zero so the import below runs at least once)
+OUTPUT=1
 TIMEOUT=120
 TIME_PASSED=0
 WAIT_STRING="."
@@ -130,8 +131,8 @@ WAIT_STRING="."
 printf "\n${GREEN}Waiting for database to respond with updated schema $WAIT_STRING${PLAIN}"
 while [ "$OUTPUT" -ne 0 ] && [ "$TIMEOUT" -gt 0 ]
     do
-        "$DOCKER_CLI" exec -t "$ORACLE_CONTAINER" /bin/sh -c "echo exit | sqlplus ${USER}/{$PASSWORD}@//${HOST}:${PORT}/${DATABASE} @/home/tables.sql" > /dev/null 2>&1
-        OUTPUT=$?
+        OUTPUT=0
+        "$DOCKER_CLI" exec -t "$ORACLE_CONTAINER" /bin/sh -c "echo exit | sqlplus -L ${USER}/${PASSWORD}@//${HOST}:${PORT}/${DATABASE} @/home/tables.sql" > /dev/null 2>&1 || OUTPUT=$?
         sleep 1s
         TIMEOUT=$((TIMEOUT - 1))
         TIME_PASSED=$((TIME_PASSED + 1))
